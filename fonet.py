@@ -45,46 +45,6 @@ def fo_spike_detector(
     x = Dense(1, name='LR', kernel_initializer='glorot_uniform')(x)
     x = Activation('sigmoid')(x)
 
-    model = Model(inputs = X_input, outputs=x, name='fo_spike_detector')
+    model = Model(inputs=X_input, outputs=x, name='fo_spike_detector')
     
     return model
-
-
-class FOnet:
-    
-    def __init__(self, weights_path='./model_weights/FOnet.h5'):
-        
-        self.model = fo_spike_detector()
-        if weights_path is not None:
-            self.model.load_weights(weights_path)
-        
-    def predict(self, x, a=None, batch_size=1024):
-        """
-            x: EEG-FO input of dimensions (n_examples, n_channels, 256)
-            a: Clean channels of dimensions (n_examples, n_channels, 1) 
-                a = 1 where the channel is clean and = 0 when channel is noisy
-        """
-        
-        n_examples = np.shape(x)[0]
-        n_channels = np.shape(x)[1]
-        yhat_channel = np.zeros((n_examples, n_channels))
-        
-        if x.ndim < 4:
-            x = np.expand_dims(x, axis = 3)
-        
-        if a is None:
-            a = np.ones((n_examples, n_channels))
-        
-        for i in range(n_channels):
-            yhat_channel[:, i] = np.squeeze(
-                self.model.predict(x[:, i, :],
-                                   batch_size=batch_size,
-                                   verbose = 1))
-            
-        yhat = np.zeros((n_examples, ))
-        for i in range(n_channels):
-            yhat = yhat + yhat_channel[:, i]*a[:, i]
-        
-        yhat = yhat/(np.sum(a, axis = 1))
-                    
-        return yhat
